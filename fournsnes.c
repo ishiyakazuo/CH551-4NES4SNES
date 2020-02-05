@@ -146,7 +146,7 @@ static void autoDetectFourScore(void)
 	if (dat18th_low && hc == 23) {
 		// only 18th data bit was low. Looks like a FOUR SCORE.
 		ctrlFlags.fourscore_mode = 1;
-    ctrlFlags.nesMode = 0x0F; // Set all 4 controllers to NES mode
+		ctrlFlags.nesMode = 0x0F; // Set all 4 controllers to NES mode
 	}
 }
 
@@ -290,126 +290,126 @@ void fournsnesUpdate(void)
 
   	if (ctrlFlags.multitap_mode)
   	{
-    		SNES_LATCH_HIGH();
-    		_delay_us(12);
-    		SNES_LATCH_LOW();
-    		_delay_us(12);
+		SNES_LATCH_HIGH();
+		_delay_us(12);
+		SNES_LATCH_LOW();
+		_delay_us(12);
 
-    		MTAP_SELECT_HIGH();
-    		_delay_us(6);
-    		for (i=0; i<8; i++)
-    		{
-    			SNES_CLOCK_LOW();
-    			_delay_us(6);
+		MTAP_SELECT_HIGH();
+		_delay_us(6);
+		for (i=0; i<8; i++)
+		{
+			SNES_CLOCK_LOW();
+			_delay_us(6);
 
-    			tmp1 <<= 1;
-    			tmp2 <<= 1;
+			tmp1 <<= 1;
+			tmp2 <<= 1;
 
-    			if (!SNES_GET_DATA1()) { tmp1 |= 1; }
-    			if (!SNES_GET_DATA2()) { tmp2 |= 1; }
+			if (!SNES_GET_DATA1()) { tmp1 |= 1; }
+			if (!SNES_GET_DATA2()) { tmp2 |= 1; }
 
-    			SNES_CLOCK_HIGH();
-    			_delay_us(6);
-    		}
-    		last_read_controller_bytes[0] = tmp1;
-    		last_read_controller_bytes[2] = tmp2;
-    		for (i=0; i<8; i++)
-    		{
-    			SNES_CLOCK_LOW();
-    			_delay_us(6);
+			SNES_CLOCK_HIGH();
+			_delay_us(6);
+		}
+		last_read_controller_bytes[0] = tmp1;
+		last_read_controller_bytes[2] = tmp2;
+		for (i=0; i<8; i++)
+		{
+			SNES_CLOCK_LOW();
+			_delay_us(6);
 
-    			tmp1 >>= 1;
-    			tmp2 >>= 1;
+			tmp1 >>= 1;
+			tmp2 >>= 1;
 
-    			if (!SNES_GET_DATA1()) { tmp1 |= 0x80; }
-    			if (!SNES_GET_DATA2()) { tmp2 |= 0x80; }
+			if (!SNES_GET_DATA1()) { tmp1 |= 0x80; }
+			if (!SNES_GET_DATA2()) { tmp2 |= 0x80; }
 
-    			SNES_CLOCK_HIGH();
-    			_delay_us(6);
-    		}
+			SNES_CLOCK_HIGH();
+			_delay_us(6);
+		}
 
 
-    		MTAP_SELECT_LOW();
-    		_delay_us(6);
-    		for (i=0; i<8; i++)
-    		{
-    			SNES_CLOCK_LOW();
-    			_delay_us(6);
+		MTAP_SELECT_LOW();
+		_delay_us(6);
+		for (i=0; i<8; i++)
+		{
+			SNES_CLOCK_LOW();
+			_delay_us(6);
 
-    			tmp3 <<= 1;
-    			tmp4 <<= 1;
+			tmp3 <<= 1;
+			tmp4 <<= 1;
 
-    			if (!SNES_GET_DATA1()) { tmp3 |= 1; }
-    			if (!SNES_GET_DATA2()) { tmp4 |= 1; }
+			if (!SNES_GET_DATA1()) { tmp3 |= 1; }
+			if (!SNES_GET_DATA2()) { tmp4 |= 1; }
 
-    			SNES_CLOCK_HIGH();
-    			_delay_us(6);
-    		}
-    		last_read_controller_bytes[4] = tmp3;
-    		last_read_controller_bytes[6] = tmp4;
-    		for (i=0; i<8; i++)
-    		{
-    			SNES_CLOCK_LOW();
-    			_delay_us(6);
+			SNES_CLOCK_HIGH();
+			_delay_us(6);
+		}
+		last_read_controller_bytes[4] = tmp3;
+		last_read_controller_bytes[6] = tmp4;
+		for (i=0; i<8; i++)
+		{
+			SNES_CLOCK_LOW();
+			_delay_us(6);
 
-    			tmp3 >>= 1;
-    			tmp4 >>= 1;
+			tmp3 >>= 1;
+			tmp4 >>= 1;
 
-    			if (!SNES_GET_DATA1()) { tmp3 |= 0x80; }
-    			if (!SNES_GET_DATA2()) { tmp4 |= 0x80; }
+			if (!SNES_GET_DATA1()) { tmp3 |= 0x80; }
+			if (!SNES_GET_DATA2()) { tmp4 |= 0x80; }
 
-    			SNES_CLOCK_HIGH();
-    			_delay_us(6);
-    		}
+			SNES_CLOCK_HIGH();
+			_delay_us(6);
+		}
   	}
     else // standard mode (not multitap)
   	{
-      SNES_LATCH_HIGH();
-      _delay_us(12);
-      SNES_LATCH_LOW();
+		SNES_LATCH_HIGH();
+		_delay_us(12);
+		SNES_LATCH_LOW();
 
-      for (i=0; i<8; i++)
-      {
-          _delay_us(6);
-          SNES_CLOCK_LOW();
+		for (i=0; i<8; i++)
+		{
+			_delay_us(6);
+			SNES_CLOCK_LOW();
 
-          tmp1 <<= 1;
-          tmp2 <<= 1;
-          tmp3 <<= 1;
-          tmp4 <<= 1;
-          if (!SNES_GET_DATA1()) { tmp1 |= 1; }
-          if (!SNES_GET_DATA2()) { tmp2 |= 1; }
-          if (!SNES_GET_DATA3()) { tmp3 |= 1; }
-          if (!SNES_GET_DATA4()) { tmp4 |= 1; }
+			tmp1 <<= 1;
+			tmp2 <<= 1;
+			tmp3 <<= 1;
+			tmp4 <<= 1;
+			if (!SNES_GET_DATA1()) { tmp1 |= 1; }
+			if (!SNES_GET_DATA2()) { tmp2 |= 1; }
+			if (!SNES_GET_DATA3()) { tmp3 |= 1; }
+			if (!SNES_GET_DATA4()) { tmp4 |= 1; }
 
-          _delay_us(6);
-          SNES_CLOCK_HIGH();
-      }
-      last_read_controller_bytes[0] = tmp1;
-      last_read_controller_bytes[2] = tmp2;
-      last_read_controller_bytes[4] = tmp3;
-      last_read_controller_bytes[6] = tmp4;
+			_delay_us(6);
+			SNES_CLOCK_HIGH();
+		}
+		last_read_controller_bytes[0] = tmp1;
+		last_read_controller_bytes[2] = tmp2;
+		last_read_controller_bytes[4] = tmp3;
+		last_read_controller_bytes[6] = tmp4;
 
-      for (i=0; i<8; i++)
-      {
-          _delay_us(6);
+		for (i=0; i<8; i++)
+		{
+			_delay_us(6);
 
-          SNES_CLOCK_LOW();
+			SNES_CLOCK_LOW();
 
-          // notice that this is different from above. We
-          // want the bits to be in reverse-order
-          tmp1 >>= 1;
-          tmp2 >>= 1;
-          tmp3 >>= 1;
-          tmp4 >>= 1;
-          if (!SNES_GET_DATA1()) { tmp1 |= 0x80; }
-          if (!SNES_GET_DATA2()) { tmp2 |= 0x80; }
-          if (!SNES_GET_DATA3()) { tmp3 |= 0x80; }
-          if (!SNES_GET_DATA4()) { tmp4 |= 0x80; }
+			// notice that this is different from above. We
+			// want the bits to be in reverse-order
+			tmp1 >>= 1;
+			tmp2 >>= 1;
+			tmp3 >>= 1;
+			tmp4 >>= 1;
+			if (!SNES_GET_DATA1()) { tmp1 |= 0x80; }
+			if (!SNES_GET_DATA2()) { tmp2 |= 0x80; }
+			if (!SNES_GET_DATA3()) { tmp3 |= 0x80; }
+			if (!SNES_GET_DATA4()) { tmp4 |= 0x80; }
 
-          _delay_us(6);
-          SNES_CLOCK_HIGH();
-      }
+			_delay_us(6);
+			SNES_CLOCK_HIGH();
+		}
     }
 
     if (ctrlFlags.live_autodetect) {
@@ -527,25 +527,25 @@ char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char id)
 	 */
 
 	idx = id - 1;
-  incrementer++;
 	if (reportBuffer != NULL)
 	{
 		reportBuffer[0]=id;
 		reportBuffer[1]=getX(last_read_controller_bytes[idx*2]);
 		reportBuffer[2]=getY(last_read_controller_bytes[idx*2]);
 
-		if (ctrlFlags.nesMode & (0x01<<idx)) {
-      reportBuffer[3] = nesReorderButtons(last_read_controller_bytes[idx*2]);
-      reportBuffer[4] = 0;
-    }
+		if (ctrlFlags.nesMode & (0x01<<idx))
+		{
+			reportBuffer[3] = nesReorderButtons(last_read_controller_bytes[idx*2]);
+			reportBuffer[4] = 0;
+		}
 		else {
 			reportBuffer[3] = snesReorderButtons(&last_read_controller_bytes[idx*2]);
-      #if NUM_BUTTONS > 8
-      reportBuffer[4] = (last_read_controller_bytes[(idx*2)+1] & 0xF0) >> 4;
-      #else
-      reportBuffer[4] = 0;
-      #endif
-    }
+			#if NUM_BUTTONS > 8
+			reportBuffer[4] = (last_read_controller_bytes[(idx*2)+1] & 0xF0) >> 4;
+			#else
+			reportBuffer[4] = 0;
+			#endif
+		}
 	}
 /*
 	memcpy(&last_reported_controller_bytes[idx*2],
@@ -555,6 +555,6 @@ char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char id)
 #if NUM_BUTTONS > 8
 	return 5;
 #else
-  return 4;
+	return 4;
 #endif
 }
