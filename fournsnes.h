@@ -1,6 +1,7 @@
 #ifndef __FOURNESFOURSNES
 #define __FOURNESFOURSNES
 
+#define NUM_GAMEPADS 4
 #define NUM_BUTTONS 12
 
 void fournsnesInit(void);

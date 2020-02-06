@@ -97,7 +97,7 @@ REP_DESC_LEN, 0,  // total length of report descriptor
 8, 0,       // maximum packet size
 10, // in ms
 */
-#define CFG_DESC_LEN (9+((9+9+7)*4))
+#define CFG_DESC_LEN (9+((9+9+7)*NUM_GAMEPADS))
 #define REP_DESC_LEN 45
 #define CFG_INTERFACE_DESCR(a)  0x09,0x04,a,0x00,0x01,0x03,0x00,0x00,0x01
 #define CFG_HID_DESCR  0x09,0x21,0x11,0x01,0x00,0x01,0x22,REP_DESC_LEN,0x00
@@ -109,7 +109,7 @@ __code uint8_t CfgDesc[CFG_DESC_LEN] =
     0x02,    /* descriptor type */
     CFG_DESC_LEN,
     0,        /* total length of data returned (including inlined descriptors) */
-    4,          /* number of interfaces in this configuration */
+    NUM_GAMEPADS,          /* number of interfaces in this configuration */
     1,          /* index of this configuration */
     0,          /* configuration name string index */
     0xA0, // USBATTR_BUSPOWER + USBATTR_REMOTEWAKE
@@ -119,15 +119,21 @@ __code uint8_t CfgDesc[CFG_DESC_LEN] =
     CFG_INTERFACE_DESCR(0),
     CFG_HID_DESCR,
     CFG_EP_DESCR(0x81),
+#if NUM_GAMEPADS > 1
     CFG_INTERFACE_DESCR(1),
     CFG_HID_DESCR,
     CFG_EP_DESCR(0x82),
+#endif
+#if NUM_GAMEPADS > 2
     CFG_INTERFACE_DESCR(2),
     CFG_HID_DESCR,
     CFG_EP_DESCR(0x83),
+#endif
+#if NUM_GAMEPADS > 3
     CFG_INTERFACE_DESCR(3),
     CFG_HID_DESCR,
     CFG_EP_DESCR(0x84)
+#endif
 };
 
 /*
@@ -200,11 +206,11 @@ __code uint8_t DevName1[] = {
 
 __code uint8_t ProductName[] = {
 	20, 0x03, 	// Length = 20 bytes, String Descriptor (0x03)
-	'4', 0,
+	'0'+NUM_GAMEPADS, 0,
 	'N', 0,
 	'E', 0,
 	'S', 0,
-	'4', 0,
+	'0'+NUM_GAMEPADS, 0,
 	'S', 0,
 	'N', 0,
 	'E', 0,
@@ -315,9 +321,15 @@ void HIDValueHandle()
 {
 	// Copy the freshest data to the endpoints and alert the Host.
 	Enp1IntIn();
+#if NUM_GAMEPADS > 1
 	Enp2IntIn();
+#endif
+#if NUM_GAMEPADS > 2
 	Enp3IntIn();
+#endif
+#if NUM_GAMEPADS > 3
 	Enp4IntIn();
+#endif
 }
 
 void GamepadGetLatest()
@@ -327,9 +339,15 @@ void GamepadGetLatest()
 	// Each of these converts the (S)NES controller data into the HID data
 	// in the format that our report descriptor specifies.
 	fournsnesBuildReport(HIDCtrl1, 1);
+#if NUM_GAMEPADS > 1
 	fournsnesBuildReport(HIDCtrl2, 2);
+#endif
+#if NUM_GAMEPADS > 2
 	fournsnesBuildReport(HIDCtrl3, 3);
+#endif
+#if NUM_GAMEPADS > 3
 	fournsnesBuildReport(HIDCtrl4, 4);
+#endif
 }
 
 void DeviceInterrupt(void) __interrupt (INT_NO_USB)
@@ -422,7 +440,7 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
                             {
                                 pDescr = ControllerRepDesc[UsbSetupBuf->wIndexL];  // Premade buffer to be sent
                                 len = REP_DESC_LEN;
-                                if (UsbSetupBuf->wIndexL == 3) {
+                                if (UsbSetupBuf->wIndexL == (NUM_GAMEPADS-1)) {
                                   Ready = 1;
                                 }
 							}
