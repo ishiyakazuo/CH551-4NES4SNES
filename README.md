@@ -1,5 +1,6 @@
 # CH551-4NES4SNES
 4NES4SNES from Raphnet (Original: https://www.raphnet.net/electronique/4nes4snes/index_en.php) ported to WCH CH551G microcontroller
+NOTE: I didn't realize the original was on Github when I started this, which is why this isn't a fork... original code is up at https://github.com/raphnet/4nes4snes
 
 # Why?
 Many reasons:
