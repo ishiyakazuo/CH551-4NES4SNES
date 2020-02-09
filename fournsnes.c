@@ -20,6 +20,8 @@
 #define PORT2REG 0xA0
 #define PORT3REG 0xB0
 
+#define LED_PIN1 0 // P3.0
+
 #define MULTITAP_PIN 1 // P3.1
 SBIT(MTAP_SIG, PORT3REG, MULTITAP_PIN);
 #define LATCH_PIN 2 // P3.2
@@ -56,9 +58,6 @@ SBIT(DATA3_SIG, PORT1REG, DATA3_PIN);
 static __xdata uint8_t last_read_controller_bytes[GAMEPAD_BYTES];
 
 static uint16_t incrementer = 0;
-
-// the most recently reported bytes
-//static __xdata uint8_t last_reported_controller_bytes[GAMEPAD_BYTES];
 
 typedef struct controllerFlags {
     unsigned nesMode         : 4;
@@ -152,6 +151,12 @@ static void autoDetectFourScore(void)
 
 void fournsnesInit(void)
 {
+	// It just so happens that all of our port 3 pins are push/pull outputs, and all of our port 1 pins are inputs w/ pull-ups...
+    P3_MOD_OC = P3_MOD_OC | (1<<LED_PIN1) | (1<<MULTITAP_PIN) | (1<<LATCH_PIN) | (1<<CLOCK_PIN); // 1 = push/pull, 0 = open-drain
+    P3_DIR_PU = P3_DIR_PU | (1<<LED_PIN1) | (1<<MULTITAP_PIN) | (1<<LATCH_PIN) | (1<<CLOCK_PIN); // 1 = output, 0 = input (if push-pull)
+    P1_MOD_OC = P1_MOD_OC &= ~((1<<DATA0_PIN) | (1<<DATA1_PIN) | (1<<DATA2_PIN) | (1<<DATA3_PIN)); // Make them all open drain
+    P1_DIR_PU = P1_DIR_PU | (1<<DATA0_PIN) | (1<<DATA1_PIN) | (1<<DATA2_PIN) | (1<<DATA3_PIN); // pull-up enable (if open drain)
+
     // clock is normally high
     SNES_CLOCK_HIGH();
 
@@ -529,7 +534,8 @@ char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char id)
 	idx = id - 1;
 	if (reportBuffer != NULL)
 	{
-		reportBuffer[0]=id;
+        // Don't need to set this each time -- it's already set in main()
+		//reportBuffer[0]=id;
 		reportBuffer[1]=getX(last_read_controller_bytes[idx*2]);
 		reportBuffer[2]=getY(last_read_controller_bytes[idx*2]);
 
@@ -542,19 +548,8 @@ char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char id)
 			reportBuffer[3] = snesReorderButtons(&last_read_controller_bytes[idx*2]);
 			#if NUM_BUTTONS > 8
 			reportBuffer[4] = (last_read_controller_bytes[(idx*2)+1] & 0xF0) >> 4;
-			#else
-			reportBuffer[4] = 0;
 			#endif
 		}
 	}
-/*
-	memcpy(&last_reported_controller_bytes[idx*2],
-			&last_read_controller_bytes[idx*2],
-			2);
-*/
-#if NUM_BUTTONS > 8
-	return 5;
-#else
-	return 4;
-#endif
+	return (3+((NUM_BUTTONS+7)/8));
 }

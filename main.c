@@ -236,17 +236,10 @@ __code uint8_t* StringDescs[USB_STRINGDESC_COUNT] = {
 	ManuName		// 3
 };
 
-#if NUM_BUTTONS > 8
-	#define GAMEPAD_XMIT_DATA_LEN 5
-#else
-	#define GAMEPAD_XMIT_DATA_LEN 4
-#endif
+#define GAMEPAD_XMIT_DATA_LEN (3+((NUM_BUTTONS+7)/8))
 
 // Buffers that the gamepad data gets written into before it's sent to the USB endpoints
-uint8_t HIDCtrl1[5] = {0x1,0x80,0x80,0x0,0x0};
-uint8_t HIDCtrl2[5] = {0x2,0x80,0x80,0x0,0x0};
-uint8_t HIDCtrl3[5] = {0x3,0x80,0x80,0x0,0x0};
-uint8_t HIDCtrl4[5] = {0x4,0x80,0x80,0x0,0x0};
+uint8_t HIDCtrl[NUM_GAMEPADS][GAMEPAD_XMIT_DATA_LEN];
 
 void CH554SoftReset( )
 {
@@ -291,28 +284,28 @@ void USBDeviceInit()
 
 void Enp1IntIn( )
 {
-    memcpy( Ep1Buffer, HIDCtrl1, GAMEPAD_XMIT_DATA_LEN);      // Copy the last generated data to the endpoint
+    memcpy( Ep1Buffer, HIDCtrl[0], GAMEPAD_XMIT_DATA_LEN);      // Copy the last generated data to the endpoint
     UEP1_T_LEN = GAMEPAD_XMIT_DATA_LEN;                       // Let the Host know we have this many bytes to send
     UEP1_CTRL = UEP1_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK; // Enable acknowledgements
 }
 
 void Enp2IntIn( )
 {
-    memcpy( Ep2Buffer, HIDCtrl2, GAMEPAD_XMIT_DATA_LEN);
+    memcpy( Ep2Buffer, HIDCtrl[1], GAMEPAD_XMIT_DATA_LEN);
     UEP2_T_LEN = GAMEPAD_XMIT_DATA_LEN;
     UEP2_CTRL = UEP2_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
 }
 
 void Enp3IntIn( )
 {
-    memcpy( Ep3Buffer, HIDCtrl3, GAMEPAD_XMIT_DATA_LEN);
+    memcpy( Ep3Buffer, HIDCtrl[2], GAMEPAD_XMIT_DATA_LEN);
     UEP3_T_LEN = GAMEPAD_XMIT_DATA_LEN;
     UEP3_CTRL = UEP3_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
 }
 
 void Enp4IntIn( )
 {
-    memcpy( Ep4Buffer, HIDCtrl4, GAMEPAD_XMIT_DATA_LEN);
+    memcpy( Ep4Buffer, HIDCtrl[3], GAMEPAD_XMIT_DATA_LEN);
     UEP4_T_LEN = GAMEPAD_XMIT_DATA_LEN;
     UEP4_CTRL = UEP4_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
 }
@@ -334,20 +327,15 @@ void HIDValueHandle()
 
 void GamepadGetLatest()
 {
+    int i;
 	fournsnesUpdate(); // polls NES/SNES pads
 
 	// Each of these converts the (S)NES controller data into the HID data
 	// in the format that our report descriptor specifies.
-	fournsnesBuildReport(HIDCtrl1, 1);
-#if NUM_GAMEPADS > 1
-	fournsnesBuildReport(HIDCtrl2, 2);
-#endif
-#if NUM_GAMEPADS > 2
-	fournsnesBuildReport(HIDCtrl3, 3);
-#endif
-#if NUM_GAMEPADS > 3
-	fournsnesBuildReport(HIDCtrl4, 4);
-#endif
+    for (i = 0; i < NUM_GAMEPADS; i++)
+    {
+    	fournsnesBuildReport(HIDCtrl[i], i+1);
+    }
 }
 
 void DeviceInterrupt(void) __interrupt (INT_NO_USB)
@@ -659,19 +647,19 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
 
 main()
 {
+    int i;
     CfgFsys( );
     mDelaymS(5);
     mInitSTDIO( );
     USBDeviceInit();
 
-	// It just so happens that all of our port 3 pins are push/pull outputs, and all of our port 1 pins are inputs w/ pull-ups...
-    P3_MOD_OC = P3_MOD_OC | (1<<LED_PIN1) | (1<<MULTITAP_PIN) | (1<<LATCH_PIN) | (1<<CLOCK_PIN); // 1 = push/pull, 0 = open-drain
-    P3_DIR_PU = P3_DIR_PU | (1<<LED_PIN1) | (1<<MULTITAP_PIN) | (1<<LATCH_PIN) | (1<<CLOCK_PIN); // 1 = output, 0 = input (if push-pull)
-    P1_MOD_OC = P1_MOD_OC &= ~((1<<DATA0_PIN) | (1<<DATA1_PIN) | (1<<DATA2_PIN) | (1<<DATA3_PIN)); // Make them all open drain
-    P1_DIR_PU = P1_DIR_PU | (1<<DATA0_PIN) | (1<<DATA1_PIN) | (1<<DATA2_PIN) | (1<<DATA3_PIN); // pull-up enable (if open drain)
-
 	// Put the I/O in a known state
     fournsnesInit();
+
+    for (i = 0; i < NUM_GAMEPADS; i++)
+    {
+        HIDCtrl[i][0] = i+1;
+    }
 
     TMOD = 0x11;
     TH0 = (65536 - 2000)/256;
