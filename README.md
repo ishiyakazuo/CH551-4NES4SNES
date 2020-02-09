@@ -1,6 +1,8 @@
 # CH551-4NES4SNES
-4NES4SNES from Raphnet (Original: https://www.raphnet.net/electronique/4nes4snes/index_en.php) ported to WCH CH551G microcontroller
-NOTE: I didn't realize the original was on Github when I started this, which is why this isn't a fork... original code is up at https://github.com/raphnet/4nes4snes
+4NES4SNES from Raphnet (Original: https://www.raphnet.net/electronique/4nes4snes/index_en.php) ported to WCH CH551G microcontroller.
+
+## NOTE:
+I didn't realize the original was on Github when I started this, which is why this isn't a fork... original code is up at https://github.com/raphnet/4nes4snes
 
 # Why?
 Many reasons:
@@ -25,4 +27,4 @@ You're right!  But I originally built my 4NES4SNES variant to support 12 buttons
 
 # Current Status
 - USB: Done!
-- NES/SNES controller interface: Untested, but probably likely to work (logic is identical to the original 4NES4SNES, I just redefined the macros that access the physical pins).  I do plan to test this in the near future.
+- NES/SNES controller interface: Untested, but probably likely to work (logic is identical to the original 4NES4SNES, I just redefined the macros that access the physical pins).  I have verified that shorting the data line to GND causes all buttons to be pressed as expected, so I'd say the likelihood of this working as intended is very high.
