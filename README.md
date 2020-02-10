@@ -26,5 +26,4 @@ This code uses the VID/PID I obtained from OpenMoko a number of years ago for my
 You're right!  But I originally built my 4NES4SNES variant to support 12 buttons because I made my own "SNES" controllers (two 4021 shift registers cascaded), which allows me to access the additional 4 buttons.  You can use actual SNES controllers with this version as well, but buttons 9-12 will never fire.  (It's sort of the same as using NES controllers with it -- you'll only ever see 4 of the buttons fire, even though more than 4 show up to the OS.)
 
 # Current Status
-- USB: Done!
-- NES/SNES controller interface: Untested, but probably likely to work (logic is identical to the original 4NES4SNES, I just redefined the macros that access the physical pins).  I have verified that shorting the data line to GND causes all buttons to be pressed as expected, so I'd say the likelihood of this working as intended is very high.
+- It works!  Tested on actual hardware as of 2020/02/09.
