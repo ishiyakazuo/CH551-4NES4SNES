@@ -152,9 +152,9 @@ static void autoDetectFourScore(void)
 void fournsnesInit(void)
 {
 	// It just so happens that all of our port 3 pins are push/pull outputs, and all of our port 1 pins are inputs w/ pull-ups...
-    P3_MOD_OC = P3_MOD_OC | (1<<LED_PIN1) | (1<<MULTITAP_PIN) | (1<<LATCH_PIN) | (1<<CLOCK_PIN); // 1 = push/pull, 0 = open-drain
+    P3_MOD_OC = P3_MOD_OC & ~((1<<LED_PIN1) | (1<<MULTITAP_PIN) | (1<<LATCH_PIN) | (1<<CLOCK_PIN)); // 0 = push/pull, 1 = open-drain
     P3_DIR_PU = P3_DIR_PU | (1<<LED_PIN1) | (1<<MULTITAP_PIN) | (1<<LATCH_PIN) | (1<<CLOCK_PIN); // 1 = output, 0 = input (if push-pull)
-    P1_MOD_OC = P1_MOD_OC &= ~((1<<DATA0_PIN) | (1<<DATA1_PIN) | (1<<DATA2_PIN) | (1<<DATA3_PIN)); // Make them all open drain
+    P1_MOD_OC = P1_MOD_OC | ((1<<DATA0_PIN) | (1<<DATA1_PIN) | (1<<DATA2_PIN) | (1<<DATA3_PIN)); // Make them all open drain
     P1_DIR_PU = P1_DIR_PU | (1<<DATA0_PIN) | (1<<DATA1_PIN) | (1<<DATA2_PIN) | (1<<DATA3_PIN); // pull-up enable (if open drain)
 
     // clock is normally high
