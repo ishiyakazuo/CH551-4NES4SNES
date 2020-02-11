@@ -4,6 +4,17 @@
 ## NOTE:
 I didn't realize the original was on Github when I started this, which is why this isn't a fork... original code is up at https://github.com/raphnet/4nes4snes
 
+# Pinout
+
+            P1.1 -       - P3.0 (LED)
+    (Clock) P3.3 -       - P3.1 (Multitap)
+            P3.4 -       - Reset
+            USB+ -       - P1.7 (Data #4)
+            USB- -       - P1.6 (Data #3)
+            GND  -       - P1.5 (Data #2)
+            5.0V -       - P1.4 (Data #1)
+            3.3V -       - P3.2 (Latch)
+
 # Why?
 Many reasons:
 - CH551 is insanely cheap.  The chip is less than USD$0.25 in small quantities.
