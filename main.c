@@ -97,18 +97,25 @@ REP_DESC_LEN, 0,  // total length of report descriptor
 8, 0,       // maximum packet size
 10, // in ms
 */
+// poll interval of host in milliseconds
+#define POLL_INTERVAL 2
+
 #define CFG_DESC_LEN (9+((9+9+7)*NUM_GAMEPADS))
+#if (NUM_BUTTONS % 8)
+#define REP_DESC_LEN 49
+#else
 #define REP_DESC_LEN 45
+#endif
 #define CFG_INTERFACE_DESCR(a)  0x09,0x04,a,0x00,0x01,0x03,0x00,0x00,0x01
 #define CFG_HID_DESCR  0x09,0x21,0x11,0x01,0x00,0x01,0x22,REP_DESC_LEN,0x00
-#define CFG_EP_DESCR(a) 0x07,0x05,a,0x03,0x08,0x00,10
+#define CFG_EP_DESCR(a) 0x07,0x05,a,0x03,0x08,0x00,POLL_INTERVAL
 
 __code uint8_t CfgDesc[CFG_DESC_LEN] =
 {
-    9,          /* sizeof(usbDescriptorConfiguration): length of descriptor in bytes */
+    9,   /* sizeof(usbDescriptorConfiguration): length of descriptor in bytes */
     0x02,    /* descriptor type */
     CFG_DESC_LEN,
-    0,        /* total length of data returned (including inlined descriptors) */
+    0,       /* total length of data returned (including inlined descriptors) */
     NUM_GAMEPADS,          /* number of interfaces in this configuration */
     1,          /* index of this configuration */
     0,          /* configuration name string index */
@@ -158,23 +165,41 @@ __code uint8_t CfgDesc[CFG_DESC_LEN] =
     0x75, 1, \			    // 			REPORT_SIZE (1)
     0x95, NUM_BUTTONS, \			    //			REPORT_COUNT (NUM_BUTTONS)
     0x81, 0x02, \			  //			INPUT (Data,Var,Abs)
+
+// It might have the following, if the number of buttons isn't a multiple of 8
+// (Windows requires byte alignment.)
+    0x95, X, \			    //			REPORT_COUNT (X)
+    0x81, 0x03, \			  //			INPUT (Const,Var,Abs)
+
   0xc0, \				//		END_COLLECTION
 0xc0 // END_COLLECTION
 */
+#if (NUM_BUTTONS % 8) // Need to add byte alignment
+#define BUTTON_BYTE_ALIGNMENT 0x95,(8-(NUM_BUTTONS%8)),0x81,0x03,
+#else
+#define BUTTON_BYTE_ALIGNMENT
+#endif
 #define GAMEPAD_REPORT_DESCRIPTOR(a) 0x05,0x01,0x09,0x04,0xA1,0x01, \
 	0x09,0x01,0xA1,0x00, \
 		0x85,a, \
   			0x09,0x30,0x09,0x31,0x15,0x00,0x26,0xFF,0x00,0x75,0x08,0x95,0x02,0x81,0x02, \
-			0x05,0x09,0x19,0x01,0x29,NUM_BUTTONS,0x15,0x00,0x25,0x01,0x75,0x01,0x95,NUM_BUTTONS,0x81,0x02, \
+			0x05,0x09,0x19,0x01,0x29,NUM_BUTTONS,0x15,0x00,0x25,0x01,0x75,0x01,\
+      0x95,NUM_BUTTONS,0x81,0x02,BUTTON_BYTE_ALIGNMENT \
 		0xC0, \
 	0xC0
 
 // These descriptors are absolutely identical except for the report ID field, hence the #define above.
-__code uint8_t ControllerRepDesc[4][REP_DESC_LEN] = {
+__code uint8_t ControllerRepDesc[NUM_GAMEPADS][REP_DESC_LEN] = {
   {GAMEPAD_REPORT_DESCRIPTOR(1)},
+  #if NUM_GAMEPADS > 1
   {GAMEPAD_REPORT_DESCRIPTOR(2)},
+  #endif
+  #if NUM_GAMEPADS > 2
   {GAMEPAD_REPORT_DESCRIPTOR(3)},
+  #endif
+  #if NUM_GAMEPADS > 3
   {GAMEPAD_REPORT_DESCRIPTOR(4)}
+  #endif
 };
 
 // Language Descriptor
@@ -288,28 +313,30 @@ void Enp1IntIn( )
     UEP1_T_LEN = GAMEPAD_XMIT_DATA_LEN;                       // Let the Host know we have this many bytes to send
     UEP1_CTRL = UEP1_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK; // Enable acknowledgements
 }
-
+#if NUM_GAMEPADS > 1
 void Enp2IntIn( )
 {
     memcpy( Ep2Buffer, HIDCtrl[1], GAMEPAD_XMIT_DATA_LEN);
     UEP2_T_LEN = GAMEPAD_XMIT_DATA_LEN;
     UEP2_CTRL = UEP2_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
 }
-
+#endif
+#if NUM_GAMEPADS > 2
 void Enp3IntIn( )
 {
     memcpy( Ep3Buffer, HIDCtrl[2], GAMEPAD_XMIT_DATA_LEN);
     UEP3_T_LEN = GAMEPAD_XMIT_DATA_LEN;
     UEP3_CTRL = UEP3_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
 }
-
+#endif
+#if NUM_GAMEPADS > 3
 void Enp4IntIn( )
 {
     memcpy( Ep4Buffer, HIDCtrl[3], GAMEPAD_XMIT_DATA_LEN);
     UEP4_T_LEN = GAMEPAD_XMIT_DATA_LEN;
     UEP4_CTRL = UEP4_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
 }
-
+#endif
 void HIDValueHandle()
 {
 	// Copy the freshest data to the endpoints and alert the Host.
@@ -424,7 +451,7 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
 							}
 							break;
                         case 0x22:                                          //Report Descriptor
-                            if (UsbSetupBuf->wIndexL < 4)
+                            if (UsbSetupBuf->wIndexL < NUM_GAMEPADS)
                             {
                                 pDescr = ControllerRepDesc[UsbSetupBuf->wIndexL];  // Premade buffer to be sent
                                 len = REP_DESC_LEN;
@@ -654,6 +681,7 @@ main()
     USBDeviceInit();
 
 	// Put the I/O in a known state
+    enableLiveAutodetect();
     fournsnesInit();
 
     for (i = 0; i < NUM_GAMEPADS; i++)

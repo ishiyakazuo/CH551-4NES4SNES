@@ -11,5 +11,7 @@ void fournsnesInit(void);
 void fournsnesUpdate(void);
 char fournsnesChanged(unsigned char report_id);
 char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char report_id);
+void enableLiveAutodetect(void);
+void disableLiveAutodetect(void);
 
 #endif
