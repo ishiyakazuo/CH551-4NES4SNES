@@ -38,3 +38,4 @@ You're right!  But I originally built my 4NES4SNES variant to support 12 buttons
 
 # Current Status
 - It works!  Tested on actual hardware as of 2020/02/09.
+- NOTE: If downloaded prior to 2020/02/16, there was an issue with Windows PCs detecting it properly.  New version fixes this.
