@@ -4,24 +4,31 @@
 ## NOTE:
 I didn't realize the original was on Github when I started this, which is why this isn't a fork... original code is up at https://github.com/raphnet/4nes4snes
 
-# Pinout
+# Pinout / "Schematic"
 
-            P1.1 -       - P3.0 (LED)
-    (Clock) P3.3 -       - P3.1 (Multitap)
-            P3.4 -       - Reset
-            USB+ -       - P1.7 (Data #4)
-            USB- -       - P1.6 (Data #3)
-            GND  -       - P1.5 (Data #2)
-            5.0V -       - P1.4 (Data #1)
-            3.3V -       - P3.2 (Latch)
+                   Pin 1 
+    (Latch)    P3.2 - o     - 3.3V (connect to GND via 0.1uF)
+    (Data #1)  P1.4 -       - 5.0V (connect to USB VBUS, connect to GND via 0.1uF)
+    (Data #2)  P1.5 -       - GND  (to USB GND)
+    (Data #3)  P1.6 -       - USB D-
+    (Data #4)  P1.7 -       - USB D+
+              Reset -       - P3.4
+    (Multitap) P3.1 -       - P3.3 (Clock)
+    (LED)      P3.0 -       - P1.1
+- It should be noted that this is pretty much the entire schematic.  You only need to connect two 0.1uF decoupling capacitors (one between 5.0V and GND, and one between 3.3V and GND), 
+- If you want to see the blinky LED (which is only really needed for debugging to ensure that the chip is programmed and running), you'll need an LED and resistor (1K resistor is probably suitable).
+- Logic is +5V like the original design.
+- To reprogram the chip at some point (for example, if the flashing doesn't go right and you need to retry with a different tool...), connect 3.3V to USB D+ (pins 16 and 12) via 10~20K resistor when connecting the USB to your host machine.
+  - I'll just note here that if you end up with a CH551 with bootloader 2.3.1 (the latest as of this writing), you may want to grab one of the tools in my repos, or the original programming tool from WCH's website, because most of the tools out there do not work with CH551, only CH552.  (This code should also work just fine with CH552, though CH551 is about 30% cheaper and will work equally well, as even the CH551 is only about half full in terms of flash and RAM.)
 
 # Why?
 Many reasons:
 - CH551 is insanely cheap.  The chip is less than USD$0.25 in small quantities.
-- It supports hardware 12Mbps USB (no V-USB hackery).
+- Way fewer parts!  Only 2 decoupling caps and a USB connector, makes it way easier to build!
+- It supports hardware 12Mbps USB (no V-USB hackery at 1.5Mbps).  This means faster response times, as the poll interval can be set as low as 1ms!
 - It has hardware support for 4 interrupt IN endpoints, and can be configured to look like 4 different controllers to all sorts of devices.
-  - This allows Linux to see 4NES4SNES as 4 controllers without a kernel patch!  (Tested in Linux Mint 19 with a different USB VID/PID)
-- This is an example of how to support multiple gamepads (and can easily be dumbed down to support 1 or 2 gamepads).  Someday, I might parameterize this further to make it more obvious how things need to change to adjust for fewer controllers.
+  - This allows Linux to see 4NES4SNES as 4 controllers without a kernel patch!  (Tested in Linux Mint 19 with a different USB VID/PID.  Latest code still works with Windows as well without issue.)
+- This is an example of how to support multiple gamepads (and can easily be dumbed down to support 1 or 2 gamepads).  I've parameterized this code to make it more obvious how things need to change to adjust for fewer controllers.  (4 is the maximum.)
 
 # How?
 I started with the following:
