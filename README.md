@@ -1,11 +1,12 @@
-# CH551-4NES4SNES
-4NES4SNES from Raphnet (Original: https://www.raphnet.net/electronique/4nes4snes/index_en.php) ported to WCH CH551G microcontroller.
+# CH551-4NES4SNES (Plus 4Play for PSX and PS2 controllers)
+- Based originally on 4NES4SNES from Raphnet (Original: https://www.raphnet.net/electronique/4nes4snes/index_en.php) and ported to WCH CH551G microcontroller (with somewhat different behavior -- see below).
+- Newest code has preliminary support for PlayStation controllers -- only one type of controller can be used at a time, and each one requires their own build.
+  - In other words, the code can support either PSX controllers or SNES controllers, but not both.
 
 ## NOTE:
 I didn't realize the original was on Github when I started this, which is why this isn't a fork... original code is up at https://github.com/raphnet/4nes4snes
 
-# Pinout / "Schematic"
-
+# Pinout / "Schematic" (SNES version)
                    Pin 1 
     (Latch)    P3.2 - o     - 3.3V (connect to GND via 0.1uF)
     (Data #1)  P1.4 -       - 5.0V (connect to USB VBUS, connect to GND via 0.1uF)
@@ -20,6 +21,18 @@ I didn't realize the original was on Github when I started this, which is why th
 - Logic is +5V like the original design.
 - To reprogram the chip at some point (for example, if the flashing doesn't go right and you need to retry with a different tool...), connect 3.3V to USB D+ (pins 16 and 12) via 10~20K resistor when connecting the USB to your host machine.
   - I'll just note here that if you end up with a CH551 with bootloader 2.3.1 (the latest as of this writing), you may want to grab one of the tools in my repos, or the original programming tool from WCH's website, because most of the tools out there do not work with CH551, only CH552.  (This code should also work just fine with CH552, though CH551 is about 30% cheaper and will work equally well, as even the CH551 is only about half full in terms of flash and RAM.)
+
+# Pinout / "Schematic" (PSX version)
+                   Pin 1 
+    (Command) P3.2 - o     - 3.3V (connect to GND via 0.1uF)
+    (ATT #1)  P1.4 -       - 5.0V (connect to USB VBUS, connect to GND via 0.1uF)
+    (ATT #2)  P1.5 -       - GND  (to USB GND)
+    (ATT #3)  P1.6 -       - USB D-
+    (ATT #4)  P1.7 -       - USB D+
+             Reset -       - P3.4
+    (Data)    P3.1 -       - P3.3 (Clock)
+    (LED)     P3.0 -       - P1.1 (ACK)
+- For this version, this assumes that whatever PlayStation controllers are being used are okay with +5V logic throughout.  I believe it may be safer to add a +3.3V regulator and tie both pins 15 and 16 to it (with appropriate decoupling).
 
 # Why?
 Many reasons:
@@ -44,5 +57,6 @@ This code uses the VID/PID I obtained from OpenMoko a number of years ago for my
 You're right!  But I originally built my 4NES4SNES variant to support 12 buttons because I made my own "SNES" controllers (two 4021 shift registers cascaded), which allows me to access the additional 4 buttons.  You can use actual SNES controllers with this version as well, but buttons 9-12 will never fire.  (It's sort of the same as using NES controllers with it -- you'll only ever see 4 of the buttons fire, even though more than 4 show up to the OS.)
 
 # Current Status
-- It works!  Tested on actual hardware as of 2020/02/09.
+- It works!  SNES controller support tested on actual hardware as of 2020/02/09.
 - NOTE: If downloaded prior to 2020/02/16, there was an issue with Windows PCs detecting it properly.  New version fixes this.
+- PlayStation support is untested and still under development.
