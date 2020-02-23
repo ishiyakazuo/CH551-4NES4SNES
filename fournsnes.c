@@ -67,12 +67,17 @@ typedef struct controllerFlags {
 } controllerFlags;
 
 static struct controllerFlags ctrlFlags;
-
+#if CONTROLLER_TYPE_SNES
 void disableLiveAutodetect(void)
 {
     ctrlFlags.live_autodetect = 0;
 }
 
+void enableLiveAutodetect(void)
+{
+    ctrlFlags.live_autodetect = 1;
+}
+#endif
 static void autoDetectSNESMultiTap(void)
 {
 	// Detection is done by observing that DATA2 becomes
@@ -164,9 +169,8 @@ void fournsnesInit(void)
     SNES_LATCH_LOW();
 
     ctrlFlags.nesMode = 0;
-    fournsnesUpdate();
-
-    if (ctrlFlags.live_autodetect == 0) {
+    if (ctrlFlags.live_autodetect == 0)
+    {
         /* Snes controller buttons are sent in this order:
             * 1st byte: B Y SEL START UP DOWN LEFT RIGHT
             * 2nd byte: A X L R 1 1 1 1
@@ -180,17 +184,13 @@ void fournsnesInit(void)
             * from the controller for the first time, detect NES
             * controllers by checking those 4 bits.
             **/
-        if (last_read_controller_bytes[1]==0xFF)
-            ctrlFlags.nesMode |= 1;
-
-        if (last_read_controller_bytes[3]==0xFF)
-            ctrlFlags.nesMode |= 2;
-
-        if (last_read_controller_bytes[5]==0xFF)
-            ctrlFlags.nesMode |= 4;
-
-        if (last_read_controller_bytes[7]==0xFF)
-            ctrlFlags.nesMode |= 8;
+        ctrlFlags.live_autodetect = 1;
+        fournsnesUpdate();
+        ctrlFlags.live_autodetect = 0;
+    }
+    else
+    {
+        fournsnesUpdate();
     }
 
     autoDetectFourScore();
@@ -447,24 +447,15 @@ void fournsnesUpdate(void)
     last_read_controller_bytes[5] = (ctrlFlags.nesMode & 4) ? 0x00 : tmp3;
     last_read_controller_bytes[7] = (ctrlFlags.nesMode & 8) ? 0x00 : tmp4;
 }
-/*
-char fournsnesChanged(unsigned char report_id)
-{
-    report_id--; // first report is 1
 
-    return memcmp(	&last_read_controller_bytes[report_id<<1],
-                    &last_reported_controller_bytes[report_id<<1],
-                    2);
-}
-*/
-unsigned char getX(unsigned char nesByte1)
+unsigned char nesSnesGetX(unsigned char nesByte1)
 {
     if (nesByte1&0x1) { return 255; }
     if (nesByte1&0x2) { return 0; }
     return 128;
 }
 
-unsigned char getY(unsigned char nesByte1)
+unsigned char nesSnesGetY(unsigned char nesByte1)
 {
     if (nesByte1&0x4) { return 255; }
     if (nesByte1&0x8) { return 0; }
@@ -536,8 +527,8 @@ char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char id)
 	{
         // Don't need to set this each time -- it's already set in main()
 		//reportBuffer[0]=id;
-		reportBuffer[1]=getX(last_read_controller_bytes[idx*2]);
-		reportBuffer[2]=getY(last_read_controller_bytes[idx*2]);
+		reportBuffer[1]=nesSnesGetX(last_read_controller_bytes[idx*2]);
+		reportBuffer[2]=nesSnesGetY(last_read_controller_bytes[idx*2]);
 
 		if (ctrlFlags.nesMode & (0x01<<idx))
 		{
@@ -551,5 +542,5 @@ char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char id)
 			#endif
 		}
 	}
-	return (3+((NUM_BUTTONS+7)/8));
+	return GAMEPAD_XMIT_DATA_LEN;
 }

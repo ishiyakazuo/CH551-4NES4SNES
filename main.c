@@ -3,7 +3,12 @@ typedef unsigned char volatile UINT8V;
 
 #include "ch554.h"
 #include "debug.h"
-#include "fournsnes.h"
+#if CONTROLLER_TYPE_PSX
+  #include "fourplay.h"
+#endif
+#if CONTROLLER_TYPE_SNES
+  #include "fournsnes.h"
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <ch554_usb.h>
@@ -101,11 +106,6 @@ REP_DESC_LEN, 0,  // total length of report descriptor
 #define POLL_INTERVAL 2
 
 #define CFG_DESC_LEN (9+((9+9+7)*NUM_GAMEPADS))
-#if (NUM_BUTTONS % 8)
-#define REP_DESC_LEN 49
-#else
-#define REP_DESC_LEN 45
-#endif
 #define CFG_INTERFACE_DESCR(a)  0x09,0x04,a,0x00,0x01,0x03,0x00,0x00,0x01
 #define CFG_HID_DESCR  0x09,0x21,0x11,0x01,0x00,0x01,0x22,REP_DESC_LEN,0x00
 #define CFG_EP_DESCR(a) 0x07,0x05,a,0x03,0x08,0x00,POLL_INTERVAL
@@ -142,51 +142,6 @@ __code uint8_t CfgDesc[CFG_DESC_LEN] =
     CFG_EP_DESCR(0x84)
 #endif
 };
-
-/*
-0x05, 0x01, \			// USAGE_PAGE (Generic Desktop)
-0x09, 0x04, \			// USAGE (Joystick)
-0xa1, 0x01, \			//	COLLECTION (Application)
-  0x09, 0x01, \			//		USAGE (Pointer)
-  0xa1, 0x00, \			//		COLLECTION (Physical)
-    0x85, a, \			  //			REPORT_ID (a)
-    0x09, 0x30, \			  //			USAGE (X)
-    0x09, 0x31, \			  //			USAGE (Y)
-    0x15, 0x00, \			  //			LOGICAL_MINIMUM (0)
-    0x26, 0xff, 0x00, \	//		  LOGICAL_MAXIMUM (255)
-    0x75, 0x08, \			  //			REPORT_SIZE (8)
-    0x95, 0x02, \			  //			REPORT_COUNT (2)
-    0x81, 0x02, \			  //			INPUT (Data,Var,Abs)
-    0x05, 0x09, \			  //			USAGE_PAGE (Button)
-    0x19, 1, \			    //   		USAGE_MINIMUM (Button 1)
-    0x29, NUM_BUTTONS, \			    //   		USAGE_MAXIMUM (Button X = NUM_BUTTONS)
-    0x15, 0x00, \			  //   		LOGICAL_MINIMUM (0)
-    0x25, 0x01, \			  //   		LOGICAL_MAXIMUM (1)
-    0x75, 1, \			    // 			REPORT_SIZE (1)
-    0x95, NUM_BUTTONS, \			    //			REPORT_COUNT (NUM_BUTTONS)
-    0x81, 0x02, \			  //			INPUT (Data,Var,Abs)
-
-// It might have the following, if the number of buttons isn't a multiple of 8
-// (Windows requires byte alignment.)
-    0x95, X, \			    //			REPORT_COUNT (X)
-    0x81, 0x03, \			  //			INPUT (Const,Var,Abs)
-
-  0xc0, \				//		END_COLLECTION
-0xc0 // END_COLLECTION
-*/
-#if (NUM_BUTTONS % 8) // Need to add byte alignment
-#define BUTTON_BYTE_ALIGNMENT 0x95,(8-(NUM_BUTTONS%8)),0x81,0x03,
-#else
-#define BUTTON_BYTE_ALIGNMENT
-#endif
-#define GAMEPAD_REPORT_DESCRIPTOR(a) 0x05,0x01,0x09,0x04,0xA1,0x01, \
-	0x09,0x01,0xA1,0x00, \
-		0x85,a, \
-  			0x09,0x30,0x09,0x31,0x15,0x00,0x26,0xFF,0x00,0x75,0x08,0x95,0x02,0x81,0x02, \
-			0x05,0x09,0x19,0x01,0x29,NUM_BUTTONS,0x15,0x00,0x25,0x01,0x75,0x01,\
-      0x95,NUM_BUTTONS,0x81,0x02,BUTTON_BYTE_ALIGNMENT \
-		0xC0, \
-	0xC0
 
 // These descriptors are absolutely identical except for the report ID field, hence the #define above.
 __code uint8_t ControllerRepDesc[NUM_GAMEPADS][REP_DESC_LEN] = {
@@ -260,8 +215,6 @@ __code uint8_t* StringDescs[USB_STRINGDESC_COUNT] = {
 	ProductName,	// 2
 	ManuName		// 3
 };
-
-#define GAMEPAD_XMIT_DATA_LEN (3+((NUM_BUTTONS+7)/8))
 
 // Buffers that the gamepad data gets written into before it's sent to the USB endpoints
 uint8_t HIDCtrl[NUM_GAMEPADS][GAMEPAD_XMIT_DATA_LEN];
@@ -355,13 +308,13 @@ void HIDValueHandle()
 void GamepadGetLatest()
 {
     int i;
-	fournsnesUpdate(); // polls NES/SNES pads
+	CONTROLLER_UPDATE(); // polls NES/SNES pads
 
 	// Each of these converts the (S)NES controller data into the HID data
 	// in the format that our report descriptor specifies.
     for (i = 0; i < NUM_GAMEPADS; i++)
     {
-    	fournsnesBuildReport(HIDCtrl[i], i+1);
+    	BUILD_CONTROLLER_REPORT(HIDCtrl[i], i+1);
     }
 }
 
@@ -682,7 +635,7 @@ main()
 
 	// Put the I/O in a known state
     enableLiveAutodetect();
-    fournsnesInit();
+    CONTROLLER_INIT();
 
     for (i = 0; i < NUM_GAMEPADS; i++)
     {
