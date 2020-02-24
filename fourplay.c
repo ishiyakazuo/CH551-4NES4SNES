@@ -101,24 +101,12 @@ __code uint8_t set_mode[]={0x01,0x44,0x00,0x01,0x03,0x00,0x00,0x00,0x00};
 __code uint8_t exit_config[]={0x01,0x43,0x00,0x00,0x5A,0x5A,0x5A,0x5A,0x5A};
 //__code uint8_t type_read[]={0x01,0x45,0x00,0x5A,0x5A,0x5A,0x5A,0x5A,0x5A};
 
-__code uint8_t psxPollingCommand[21] = {
+__code uint8_t psxPollingCommand[9] = {
 	0x01, // Always 0x01 for controller
     0x42, // Controller poll command
     0x00,
     0x00, // Motor #1 strength
     0x00, // Motor #2 strength
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
-    0x00,
     0x00,
     0x00,
     0x00,
@@ -154,10 +142,11 @@ void fourplaySetAnalogMode(uint8_t port);
 void fourplayInit(void)
 {
 	// It just so happens that all of our port 3 pins are push/pull outputs, and all of our port 1 pins are inputs w/ pull-ups...
-    P3_MOD_OC = P3_MOD_OC & ~((1<<LED_PIN1) | (1<<DATA_PIN) | (1<<CMD_PIN) | (1<<CLOCK_PIN)); // 0 = push/pull, 1 = open-drain
+    P3_MOD_OC = P3_MOD_OC & ~((1<<LED_PIN1) | (1<<CMD_PIN) | (1<<CLOCK_PIN)); // 0 = push/pull, 1 = open-drain
+    P3_MOD_OC = P3_MOD_OC | (1<<DATA_PIN); // 0 = push/pull, 1 = open-drain (DATA is the only open-drain one)
     P3_DIR_PU = P3_DIR_PU | (1<<LED_PIN1) | (1<<DATA_PIN) | (1<<CMD_PIN) | (1<<CLOCK_PIN); // 1 = output, 0 = input (if push-pull)
-    P1_MOD_OC = P1_MOD_OC | (1<<ACK_PIN) | (1<<CHIPSEL1_PIN) | (1<<CHIPSEL2_PIN) | (1<<CHIPSEL3_PIN) | (1<<CHIPSEL4_PIN); // Make them all open drain
-    P1_DIR_PU = P1_DIR_PU | (1<<ACK_PIN) | (1<<CHIPSEL1_PIN) | (1<<CHIPSEL2_PIN) | (1<<CHIPSEL3_PIN) | (1<<CHIPSEL4_PIN); // pull-up enable (if open drain)
+    P1_MOD_OC = P1_MOD_OC | (1<<ACK_PIN); // Make ACK open-drain, and chip selects push/pull.
+    P1_DIR_PU = P1_DIR_PU | (1<<ACK_PIN) | (1<<CHIPSEL1_PIN) | (1<<CHIPSEL2_PIN) | (1<<CHIPSEL3_PIN) | (1<<CHIPSEL4_PIN); // pull-up enable for ACK, output mode for chip selects.
 
     // clock is normally high
     PSX_CLOCK_HIGH();
@@ -183,25 +172,29 @@ uint8_t fourplayCmdByte(uint8_t cmdByteOut)
         if (cmdByteOut & 0x01)  { PSX_CMD_HIGH(); }
         else                    { PSX_CMD_LOW(); }
         cmdByteOut >>= 1;
-        _delay_us(5);
+        _delay_us(CLOCK_DELAY_US);
         PSX_CLOCK_HIGH();
         tmpByteIn >>= 1;
-        // We're inverting the data so that pressed buttons = 1.
-        if (!PSX_GET_DATA()) { tmpByteIn |= 0x80; }
-        _delay_us(5);
+        if (PSX_GET_DATA()) { tmpByteIn |= 0x80; }
+        _delay_us(CLOCK_DELAY_US);
     }
     return tmpByteIn;
 }
 
 uint8_t fourplayWaitAck()
 {
-    uint8_t ackWait = 100;
+    uint8_t ackWait = 100; // Timeout after approximately 100us.
     while (ackWait)
     {
         ackWait--;
-        if (PSX_GET_ACK() == 0) {
-            while (PSX_GET_ACK() == 0) {;}
-            return 1;
+        if (PSX_GET_ACK() == 0)
+        {
+            while (ackWait && (PSX_GET_ACK() == 0))
+            {
+                ackWait--;
+                _delay_us(1);
+            }
+            return 1; // Received an ACK, and now moving on with life.
         }
         _delay_us(1);
     }
@@ -254,7 +247,7 @@ void fourplayUpdate(void)
         controllerOffset = NUM_READ_BYTES_PER_GAMEPAD*i;
         SET_CHIP_SEL_LOW(i);
         fourplayCmd(psxPollingCommand, &last_read_controller_bytes[controllerOffset], 3, 3);
-        controllerType = INVERT_BYTE(last_read_controller_bytes[controllerOffset+1]);
+        controllerType = last_read_controller_bytes[controllerOffset+1];
         if ((controllerType & 0x40) == 0x40)
         {
             if (controllerType & 0x10)
@@ -282,8 +275,7 @@ void fourplayUpdate(void)
         }
         else
         { // No controller connected, or unsupported type (e.g. NegCon)
-            last_read_controller_bytes[controllerOffset+3] = 0;
-            last_read_controller_bytes[controllerOffset+4] = 0;
+            memset(&last_read_controller_bytes[controllerOffset], 0, 5);
             memset(&last_read_controller_bytes[controllerOffset+5], 0x7F, 4);
         }
         SET_CHIP_SEL_HIGH(i);
@@ -308,24 +300,24 @@ unsigned char psxGetY(unsigned char byte1)
 unsigned char psxGetButtonByte1(unsigned char bytes[2])
 {
     unsigned char retVal;
-    retVal  = (bytes[0] & PSB_CROSS)    ? 0x01 : 0;
-    retVal |= (bytes[0] & PSB_CIRCLE)   ? 0x02 : 0;
-    retVal |= (bytes[0] & PSB_SQUARE)   ? 0x04 : 0;
-    retVal |= (bytes[0] & PSB_TRIANGLE) ? 0x08 : 0;
-    retVal |= (bytes[1] & PSB_L1)       ? 0x10 : 0;
-    retVal |= (bytes[1] & PSB_R1)       ? 0x20 : 0;
-    retVal |= (bytes[0] & PSB_SELECT)   ? 0x40 : 0;
-    retVal |= (bytes[0] & PSB_START)    ? 0x80 : 0;
+    retVal  = (bytes[0] & PSB_CROSS)    ? 0 : 0x01;
+    retVal |= (bytes[0] & PSB_CIRCLE)   ? 0 : 0x02;
+    retVal |= (bytes[0] & PSB_SQUARE)   ? 0 : 0x04;
+    retVal |= (bytes[0] & PSB_TRIANGLE) ? 0 : 0x08;
+    retVal |= (bytes[1] & PSB_L1)       ? 0 : 0x10;
+    retVal |= (bytes[1] & PSB_R1)       ? 0 : 0x20;
+    retVal |= (bytes[0] & PSB_SELECT)   ? 0 : 0x40;
+    retVal |= (bytes[0] & PSB_START)    ? 0 : 0x80;
     return retVal;
 }
 
 unsigned char psxGetButtonByte2(unsigned char bytes[2])
 {
     unsigned char retVal;
-    retVal  = (bytes[0] & PSB_L3) ? 0x02 : 0;
-    retVal |= (bytes[0] & PSB_R3) ? 0x04 : 0;
-    retVal |= (bytes[1] & PSB_L2) ? 0x08 : 0;
-    retVal |= (bytes[1] & PSB_R2) ? 0x10 : 0;
+    retVal  = (bytes[0] & PSB_L3) ? 0 : 0x02;
+    retVal |= (bytes[0] & PSB_R3) ? 0 : 0x04;
+    retVal |= (bytes[1] & PSB_L2) ? 0 : 0x08;
+    retVal |= (bytes[1] & PSB_R2) ? 0 : 0x10;
     return retVal;
 }
 

@@ -15,6 +15,10 @@
 #define NUM_AXES 2
 #endif
 
+#ifndef CLOCK_DELAY_US
+#define CLOCK_DELAY_US 4
+#endif
+
 // This is the PSX controller's report descriptor.  Defined as follows:
 /*
 0x05, 0x01, \			// USAGE_PAGE (Generic Desktop)
