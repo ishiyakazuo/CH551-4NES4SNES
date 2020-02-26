@@ -56,7 +56,12 @@ This code uses the VID/PID I obtained from OpenMoko a number of years ago for my
 # Wait, 12 buttons?  But an SNES controller only has 8...
 You're right!  But I originally built my 4NES4SNES variant to support 12 buttons because I made my own "SNES" controllers (two 4021 shift registers cascaded), which allows me to access the additional 4 buttons.  You can use actual SNES controllers with this version as well, but buttons 9-12 will never fire.  (It's sort of the same as using NES controllers with it -- you'll only ever see 4 of the buttons fire, even though more than 4 show up to the OS.)
 
-# Current Status
+# Current Status (NES/SNES)
 - It works!  SNES controller support tested on actual hardware as of 2020/02/09.
 - NOTE: If downloaded prior to 2020/02/16, there was an issue with Windows PCs detecting it properly.  New version fixes this.
-- PlayStation controller digital inputs work, but the analog sticks and buttons do not yet work properly.  (Nothing works when NUM_AXES is defined to be 6 or 8 -- define NUM_AXES as 2 for digital only mode.)
+
+# Current Status (PlayStation)
+- DualShock and DualShock 2 work, with some caveats:
+  - L2/R2 analog function doesn't yet work
+  - Analog mode won't turn off, even if you press the button (code always expects analog mode anyway, so this doesn't hurt anything).
+- Original digital pad is still untested.
