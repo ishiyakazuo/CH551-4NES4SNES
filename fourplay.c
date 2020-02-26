@@ -337,15 +337,19 @@ char fourplayBuildReport(unsigned char *reportBuffer, unsigned char id)
 		reportBuffer[1]=psxGetX(last_read_controller_bytes[offset+3]);
 		reportBuffer[2]=psxGetY(last_read_controller_bytes[offset+3]);
         reportBuffer[NUM_AXES+1]=psxGetButtonByte1(&last_read_controller_bytes[offset+3]);
+        #if (NUM_BUTTONS > 8)
         reportBuffer[NUM_AXES+2]=psxGetButtonByte2(&last_read_controller_bytes[offset+3]);
+        #endif
         #if (NUM_AXES >= 6)
         // Use data for sticks and analog buttons
         if ((last_read_controller_bytes[offset+1] & 0xF0) == 0x70)
         {
-            reportBuffer[3] = last_read_controller_bytes[offset+5];
-            reportBuffer[4] = last_read_controller_bytes[offset+6];
-            reportBuffer[5] = last_read_controller_bytes[offset+7];
-            reportBuffer[6] = last_read_controller_bytes[offset+8];
+            // Left stick
+            reportBuffer[3] = last_read_controller_bytes[offset+7];
+            reportBuffer[4] = last_read_controller_bytes[offset+8];
+            // Right stick
+            reportBuffer[5] = last_read_controller_bytes[offset+5];
+            reportBuffer[6] = last_read_controller_bytes[offset+6];
             #if (NUM_AXES >= 8)
             // Can use analog L2/R2
             if (last_read_controller_bytes[offset+1] == 0x79)

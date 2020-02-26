@@ -12,7 +12,7 @@
 #endif
 
 #ifndef NUM_AXES
-#define NUM_AXES 2
+#define NUM_AXES 8
 #endif
 
 #if (NUM_AXES & 1)

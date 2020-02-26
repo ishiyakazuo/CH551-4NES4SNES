@@ -119,10 +119,10 @@ SBIT(LED1, PORT3REG, LED_PIN1);
 #define DATA3_PIN 7 // P1.7
 
 __xdata __at (0x0000) uint8_t  Ep0Buffer[64];
-__xdata __at (0x0040) uint8_t  Ep4Buffer[16];
-__xdata __at (0x0080) uint8_t  Ep1Buffer[16];
-__xdata __at (0x00C0) uint8_t  Ep2Buffer[16];
-__xdata __at (0x0100) uint8_t  Ep3Buffer[16];
+__xdata __at (0x0040) uint8_t  Ep4Buffer[64];
+__xdata __at (0x0080) uint8_t  Ep1Buffer[64];
+__xdata __at (0x00C0) uint8_t  Ep2Buffer[64];
+__xdata __at (0x0100) uint8_t  Ep3Buffer[64];
 
 uint8_t SetupReq,SetupLen,Ready,Count,UsbConfig;
 PUINT8  pDescr;
@@ -187,7 +187,7 @@ REP_DESC_LEN, 0,  // total length of report descriptor
 5,  // descriptor type = endpoint
 0x81,       // IN endpoint number 1
 0x03,       // attrib: Interrupt endpoint
-8, 0,       // maximum packet size
+16, 0,       // maximum packet size
 10, // in ms
 */
 // poll interval of host in milliseconds
@@ -196,7 +196,7 @@ REP_DESC_LEN, 0,  // total length of report descriptor
 #define CFG_DESC_LEN (9+((9+9+7)*NUM_GAMEPADS))
 #define CFG_INTERFACE_DESCR(a)  0x09,0x04,a,0x00,0x01,0x03,0x00,0x00,0x01
 #define CFG_HID_DESCR  0x09,0x21,0x11,0x01,0x00,0x01,0x22,REP_DESC_LEN,0x00
-#define CFG_EP_DESCR(a) 0x07,0x05,a,0x03,0x08,0x00,POLL_INTERVAL
+#define CFG_EP_DESCR(a) 0x07,0x05,a,0x03,0x10,0x00,POLL_INTERVAL
 
 __code uint8_t CfgDesc[CFG_DESC_LEN] =
 {
@@ -351,7 +351,7 @@ void HIDValueHandle()
 void GamepadGetLatest()
 {
     int i;
-	CONTROLLER_UPDATE(); // polls NES/SNES pads
+	CONTROLLER_UPDATE(); // polls pads
 
 	// Each of these converts the (S)NES controller data into the HID data
 	// in the format that our report descriptor specifies.
