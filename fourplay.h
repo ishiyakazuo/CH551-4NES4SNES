@@ -15,18 +15,78 @@
 #define NUM_AXES 2
 #endif
 
+#if (NUM_AXES & 1)
+#error You cannot have an odd number of axes defined.
+#endif
+#if (NUM_AXES < 2)
+#error You need to define a minimum of 2 axes.
+#endif
+#if (NUM_AXES > 8)
+#error You cannot define more than 8 axes.
+#endif
+
 #ifndef CLOCK_DELAY_US
 #define CLOCK_DELAY_US 4
 #endif
+
+/*
+#define XY_AXIS_COL_LENGTH 18*(NUM_AXES/2)
+#define XY_AXIS_COLLECTION(a,b)  0xa1, 0x00, 0x09, a, 0x09, b, \
+    0x15, 0x00, 0x26, 0xff, 0x00, 0x75, 0x08, 0x95, 0x02, 0x81, 0x02, 0xC0,
+
+#define AXIS_DESCR1 XY_AXIS_COLLECTION(0x30, 0x31)
+#if (NUM_AXES >= 4)
+#define AXIS_DESCR2 XY_AXIS_COLLECTION(0x32, 0x33)
+#else
+#define AXIS_DESCR2
+#endif
+#if (NUM_AXES >= 6)
+#define AXIS_DESCR3 XY_AXIS_COLLECTION(0x34, 0x35)
+#else
+#define AXIS_DESCR3
+#endif
+#if (NUM_AXES >= 8)
+#define AXIS_DESCR4 XY_AXIS_COLLECTION(0x36, 0x37)
+#else
+#define AXIS_DESCR4
+#endif
+
+#define AXIS_COLLECTIONS AXIS_DESCR1 AXIS_DESCR2 AXIS_DESCR3 AXIS_DESCR4
+*/
+#define XY_AXIS_COL_LENGTH 14+(NUM_AXES*2)
+#define XY_AXIS_COLLECTION(a,b) 0x09, a, 0x09, b
+
+#define AXIS_DESCR1 XY_AXIS_COLLECTION(0x30, 0x31),
+#if (NUM_AXES >= 4)
+#define AXIS_DESCR2 XY_AXIS_COLLECTION(0x32, 0x33),
+#else
+#define AXIS_DESCR2
+#endif
+#if (NUM_AXES >= 6)
+#define AXIS_DESCR3 XY_AXIS_COLLECTION(0x34, 0x35),
+#else
+#define AXIS_DESCR3
+#endif
+#if (NUM_AXES >= 8)
+#define AXIS_DESCR4 XY_AXIS_COLLECTION(0x36, 0x37),
+#else
+#define AXIS_DESCR4
+#endif
+
+#define AXIS_COLLECTIONS  0xa1, 0x00, AXIS_DESCR1 AXIS_DESCR2 AXIS_DESCR3 AXIS_DESCR4 \
+    0x15, 0x00, 0x26, 0xff, 0x00, 0x75, 0x08, 0x95, NUM_AXES, 0x81, 0x02, 0xC0,
+
 
 // This is the PSX controller's report descriptor.  Defined as follows:
 /*
 0x05, 0x01, \			// USAGE_PAGE (Generic Desktop)
 0x09, 0x04, \			// USAGE (Joystick)
 0xa1, 0x01, \			//	COLLECTION (Application)
+0x85, a, \			  //			REPORT_ID (a)
   0x09, 0x01, \			//		USAGE (Pointer)
+
+  // This is the section above (XY_AXIS_COLLECTION).
   0xa1, 0x00, \			//		COLLECTION (Physical)
-    0x85, a, \			  //			REPORT_ID (a)
     0x09, 0x30, \			  //			USAGE (X)
     0x09, 0x31, \			  //			USAGE (Y)
     0x15, 0x00, \			  //			LOGICAL_MINIMUM (0)
@@ -34,6 +94,7 @@
     0x75, 0x08, \			  //			REPORT_SIZE (8)
     0x95, 0x02, \			  //			REPORT_COUNT (2)
     0x81, 0x02, \			  //			INPUT (Data,Var,Abs)
+
     0x05, 0x09, \			  //			USAGE_PAGE (Button)
     0x19, 1, \			    //   		USAGE_MINIMUM (Button 1)
     0x29, NUM_BUTTONS, \			    //   		USAGE_MAXIMUM (Button X = NUM_BUTTONS)
@@ -53,19 +114,22 @@
 */
 
 #if (NUM_BUTTONS % 8) // Need to add byte alignment
+#define BYTE_ALIGNMENT_DESC_LEN 4
 #define BUTTON_BYTE_ALIGNMENT 0x95,(8-(NUM_BUTTONS%8)),0x81,0x03,
-#define REP_DESC_LEN 49
 #else
+#define BYTE_ALIGNMENT_DESC_LEN 0
 #define BUTTON_BYTE_ALIGNMENT
-#define REP_DESC_LEN 45
 #endif
-#define GAMEPAD_REPORT_DESCRIPTOR(a) 0x05,0x01,0x09,0x04,0xA1,0x01, \
-	0x09,0x01,0xA1,0x00, \
-		0x85,a, \
-  			0x09,0x30,0x09,0x31,0x15,0x00,0x26,0xFF,0x00,0x75,0x08,0x95,0x02,0x81,0x02, \
-			0x05,0x09,0x19,0x01,0x29,NUM_BUTTONS,0x15,0x00,0x25,0x01,0x75,0x01,\
-      0x95,NUM_BUTTONS,0x81,0x02,BUTTON_BYTE_ALIGNMENT \
-		0xC0, \
+
+#define REP_DESC_LEN (27+(XY_AXIS_COL_LENGTH)+BYTE_ALIGNMENT_DESC_LEN)
+
+#define GAMEPAD_REPORT_DESCRIPTOR(a) 0x05,0x01,0x09,0x04, \
+    0xA1,0x01, \
+        0x85,a, \
+        0x09,0x01, \
+        AXIS_COLLECTIONS \
+			0x05,0x09,0x19,0x01,0x29,NUM_BUTTONS,0x15,0x00,0x25,0x01,0x75,0x01, \
+            0x95,NUM_BUTTONS,0x81,0x02,BUTTON_BYTE_ALIGNMENT \
 	0xC0
 
 // This defines the # of bytes transmitted to the host per controller.
