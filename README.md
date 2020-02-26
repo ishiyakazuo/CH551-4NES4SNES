@@ -59,4 +59,4 @@ You're right!  But I originally built my 4NES4SNES variant to support 12 buttons
 # Current Status
 - It works!  SNES controller support tested on actual hardware as of 2020/02/09.
 - NOTE: If downloaded prior to 2020/02/16, there was an issue with Windows PCs detecting it properly.  New version fixes this.
-- PlayStation support is untested and still under development.
+- PlayStation controller digital inputs work, but the analog sticks and buttons do not yet work properly.  (Nothing works when NUM_AXES is defined to be 6 or 8 -- define NUM_AXES as 2 for digital only mode.)
