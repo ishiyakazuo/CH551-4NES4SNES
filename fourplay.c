@@ -211,7 +211,7 @@ void fourplayCmd(uint8_t* cmd, uint8_t* resp, uint8_t len, uint8_t ackByteNum)
         {
             if (!fourplayWaitAck())
             {
-                tmpByteIn = 0;
+                //tmpByteIn = 0;
             }
         }
         resp[byteNum] = tmpByteIn;
@@ -248,7 +248,12 @@ void fourplayUpdate(void)
         SET_CHIP_SEL_LOW(i);
         fourplayCmd(psxPollingCommand, &last_read_controller_bytes[controllerOffset], 3, 3);
         controllerType = last_read_controller_bytes[controllerOffset+1];
-        if ((controllerType & 0x40) == 0x40)
+        if ((controllerType == 0xFF) || ((controllerType & 0x40) != 0x40))
+        { // No controller connected, or unsupported type (e.g. NegCon)
+            memset(&last_read_controller_bytes[controllerOffset], 0xFF, 5);
+            memset(&last_read_controller_bytes[controllerOffset+5], 0x7F, 4);
+        }
+        else
         {
             if (controllerType & 0x10)
             {
@@ -273,26 +278,21 @@ void fourplayUpdate(void)
                 memset(&last_read_controller_bytes[controllerOffset+5], 0x7F, 4);
             }
         }
-        else
-        { // No controller connected, or unsupported type (e.g. NegCon)
-            memset(&last_read_controller_bytes[controllerOffset], 0, 5);
-            memset(&last_read_controller_bytes[controllerOffset+5], 0x7F, 4);
-        }
         SET_CHIP_SEL_HIGH(i);
     }
 }
 
 unsigned char psxGetX(unsigned char byte1)
 {
-    if (byte1 & PSB_PAD_LEFT)  { return 0;   }
-    if (byte1 & PSB_PAD_RIGHT) { return 255; }
+    if ((byte1 & PSB_PAD_LEFT) == 0)  { return 0;   }
+    if ((byte1 & PSB_PAD_RIGHT) == 0) { return 255; }
     return 128;
 }
 
 unsigned char psxGetY(unsigned char byte1)
 {
-    if (byte1 & PSB_PAD_DOWN) { return 0; }
-    if (byte1 & PSB_PAD_UP) { return 255; }
+    if ((byte1 & PSB_PAD_DOWN) == 0) { return 255; }
+    if ((byte1 & PSB_PAD_UP) == 0)   { return 0; }
     return 128;
 }
 
@@ -300,10 +300,10 @@ unsigned char psxGetY(unsigned char byte1)
 unsigned char psxGetButtonByte1(unsigned char bytes[2])
 {
     unsigned char retVal;
-    retVal  = (bytes[0] & PSB_CROSS)    ? 0 : 0x01;
-    retVal |= (bytes[0] & PSB_CIRCLE)   ? 0 : 0x02;
-    retVal |= (bytes[0] & PSB_SQUARE)   ? 0 : 0x04;
-    retVal |= (bytes[0] & PSB_TRIANGLE) ? 0 : 0x08;
+    retVal  = (bytes[1] & PSB_CROSS)    ? 0 : 0x01;
+    retVal |= (bytes[1] & PSB_CIRCLE)   ? 0 : 0x02;
+    retVal |= (bytes[1] & PSB_SQUARE)   ? 0 : 0x04;
+    retVal |= (bytes[1] & PSB_TRIANGLE) ? 0 : 0x08;
     retVal |= (bytes[1] & PSB_L1)       ? 0 : 0x10;
     retVal |= (bytes[1] & PSB_R1)       ? 0 : 0x20;
     retVal |= (bytes[0] & PSB_SELECT)   ? 0 : 0x40;

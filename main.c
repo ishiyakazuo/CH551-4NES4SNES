@@ -3,15 +3,103 @@ typedef unsigned char volatile UINT8V;
 
 #include "ch554.h"
 #include "debug.h"
-#if CONTROLLER_TYPE_PSX
-  #include "fourplay.h"
-#endif
-#if CONTROLLER_TYPE_SNES
-  #include "fournsnes.h"
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <ch554_usb.h>
+
+#if CONTROLLER_TYPE_SNES
+  #include "fournsnes.h"
+  __code uint8_t ProductName[] = {
+      20, 0x03, 	// Length = 20 bytes, String Descriptor (0x03)
+      '0'+NUM_GAMEPADS, 0,
+      'N', 0,
+      'E', 0,
+      'S', 0,
+      '0'+NUM_GAMEPADS, 0,
+      'S', 0,
+      'N', 0,
+      'E', 0,
+      'S', 0
+  };
+
+  // String Descriptors:
+  __code uint8_t DevName1[] = {
+      34, 0x03, 	// Length = 34 bytes, String Descriptor (0x03)
+      'N', 0,
+      'E', 0,
+      'S', 0,
+      '/', 0,
+      'S', 0,
+      'N', 0,
+      'E', 0,
+      'S', 0,
+      ' ', 0,
+      'G', 0,
+      'a', 0,
+      'm', 0,
+      'e', 0,
+      'p', 0,
+      'a', 0,
+      'd', 0
+  };
+
+  __code uint8_t ManuName[] = {
+      16, 0x03, 	// Length = 30 bytes, String Descriptor (0x03)
+      'R', 0,
+      'a', 0,
+      'p', 0,
+      'h', 0,
+      'n', 0,
+      'e', 0,
+      't', 0
+  };
+#endif
+
+#if CONTROLLER_TYPE_PSX
+  #include "fourplay.h"
+__code unsigned char ProductName[] = {
+    20, 0x03, 	// Length = 20 bytes, String Descriptor (0x03)
+    '0'+NUM_GAMEPADS, 0,
+    'P', 0,
+    'l', 0,
+    'a', 0,
+    'y', 0,
+    ' ', 0,
+    'P', 0,
+    'a', 0,
+    'd', 0
+};
+
+// String Descriptors:
+__code unsigned char DevName1[] = {
+    24, 0x03, 	// Length = 24 bytes, String Descriptor (0x03)
+    'P', 0,
+    'S', 0,
+    'X', 0,
+    ' ', 0,
+    'G', 0,
+    'a', 0,
+    'm', 0,
+    'e', 0,
+    'p', 0,
+    'a', 0,
+    'd', 0
+};
+
+__code unsigned char ManuName[] = {
+    20, 0x03, 	// Length = 20 bytes, String Descriptor (0x03)
+    'H', 0,
+    'a', 0,
+    'r', 0,
+    'p', 0,
+    's', 0,
+    't', 0,
+    'o', 0,
+    'n', 0,
+    'e', 0
+};
+#endif
+
 
 uint32_t millis, last;
 
@@ -161,51 +249,6 @@ __code uint8_t ControllerRepDesc[NUM_GAMEPADS][REP_DESC_LEN] = {
 __code uint8_t LangDesc[] = {
 	4, 0x03,		// Length = 4 bytes, String Descriptor (0x03)
 	0x09, 0x04	// 0x0409 English - United States
-};
-
-// String Descriptors:
-__code uint8_t DevName1[] = {
-	34, 0x03, 	// Length = 34 bytes, String Descriptor (0x03)
-	'N', 0,
-	'E', 0,
-	'S', 0,
-	'/', 0,
-	'S', 0,
-	'N', 0,
-	'E', 0,
-	'S', 0,
-	' ', 0,
-	'G', 0,
-	'a', 0,
-	'm', 0,
-	'e', 0,
-	'p', 0,
-	'a', 0,
-	'd', 0
-};
-
-__code uint8_t ProductName[] = {
-	20, 0x03, 	// Length = 20 bytes, String Descriptor (0x03)
-	'0'+NUM_GAMEPADS, 0,
-	'N', 0,
-	'E', 0,
-	'S', 0,
-	'0'+NUM_GAMEPADS, 0,
-	'S', 0,
-	'N', 0,
-	'E', 0,
-	'S', 0
-};
-
-__code uint8_t ManuName[] = {
-	16, 0x03, 	// Length = 30 bytes, String Descriptor (0x03)
-	'R', 0,
-	'a', 0,
-	'p', 0,
-	'h', 0,
-	'n', 0,
-	'e', 0,
-	't', 0
 };
 
 #define USB_STRINGDESC_COUNT 4
