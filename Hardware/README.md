@@ -3,8 +3,10 @@
 - For SNES use, do not populate the regulator, or the 4.7uF capacitors.  Short pins 1 and 2 of SJ2, do not short SJ1.  SV5 is not used, and SV6 only goes to the controller port connected to the multitap (which I believe is the first port).
 
 # Things I might go back and fix
-- I think I can probably fix the jumpers a bit -- I don't think I need a jumper from the USB VBUS to VIN -- it can always be connected.  If the regulator isn't there, it won't do anything, anyway.  I might change over to a single 3 pad jumper, with VCC being either shorted to USB VBUS or +3.3V, and just connect the regulator output to +3.3V.  (Probably the smart way to go.)
-- The pins aren't aligned to a 0.1" layout.  I use a 0.1" protoboard for lining up and holding header pins in place while soldering, so this was something I regretted when I soldered up the first batch.
+- The pins aren't aligned to a 0.1" layout.  I use a 0.1" protoboard for lining up and holding header pins in place while soldering, so this was something I regretted when I soldered up the first batch.  (On rev. 2, I thought I fixed this, but then realized that I messed up again, so will need to make a rev. 2a...)
+
+# Things I did go back and fix since rev. 1
+- Jumpers for selecting VCC are much more simplified now.
 
 # Other comments:
 - TVS diode is optional.  The TVS diode I use is only about $0.02 from LCSC.
