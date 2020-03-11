@@ -3,7 +3,8 @@
 - For SNES use, do not populate the regulator, or the 4.7uF capacitors.  Short pins 1 and 2 of SJ2, do not short SJ1.  SV5 is not used, and SV6 only goes to the controller port connected to the multitap (which I believe is the first port).
 
 # Things I might go back and fix
-- The pins aren't aligned to a 0.1" layout.  I use a 0.1" protoboard for lining up and holding header pins in place while soldering, so this was something I regretted when I soldered up the first batch.  (On rev. 2, I thought I fixed this, but then realized that I messed up again, so will need to make a rev. 2a...)
+- The pins aren't aligned to a 0.1" layout.  I use a 0.1" protoboard for lining up and holding header pins in place while soldering, so this was something I regretted when I soldered up the first batch.
+  - Update: I did fix this on the mini variant, so if you want to connect up 0.1" header pins, rather than the screw terminals, I'd recommend going with that version from now on.
 
 # Things I did go back and fix since rev. 1
 - Jumpers for selecting VCC are much more simplified now.
