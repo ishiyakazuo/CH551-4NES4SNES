@@ -333,19 +333,30 @@ void Enp4IntIn( )
     UEP4_CTRL = UEP4_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
 }
 #endif
-void HIDValueHandle()
+void HIDValueHandle(int gamepadID)
 {
 	// Copy the freshest data to the endpoints and alert the Host.
-	Enp1IntIn();
-#if NUM_GAMEPADS > 1
-	Enp2IntIn();
-#endif
-#if NUM_GAMEPADS > 2
-	Enp3IntIn();
-#endif
-#if NUM_GAMEPADS > 3
-	Enp4IntIn();
-#endif
+    switch (gamepadID)
+    {
+        case 0:
+	        Enp1IntIn();
+            break;
+    #if NUM_GAMEPADS > 1
+        case 1:
+           	Enp2IntIn();
+            break;
+    #endif
+    #if NUM_GAMEPADS > 2
+        case 2:
+        	Enp3IntIn();
+            break;
+    #endif
+    #if NUM_GAMEPADS > 3
+        case 3:
+        	Enp4IntIn();
+            break;
+    #endif
+    }
 }
 
 void GamepadGetLatest()
@@ -364,7 +375,7 @@ void GamepadGetLatest()
 void DeviceInterrupt(void) __interrupt (INT_NO_USB)
 {
     uint8_t len = 0;
-    if(UIF_TRANSFER)                                                            // USB transfer complete flag־
+    while(UIF_TRANSFER)                                                            // USB transfer complete flag־
     {
         switch (USB_INT_ST & (MASK_UIS_TOKEN | MASK_UIS_ENDP))
         {
@@ -707,7 +718,9 @@ main()
         GamepadGetLatest(); // Always get fresh data from the gamepads, because the fresher, the better!
         if(Ready)
         {
-            HIDValueHandle(); // Send it to the Host if the host wants it
+            HIDValueHandle(i); // Send it to the Host if the host wants it
         }
+        i++;
+        i %= NUM_GAMEPADS;
     }
 }
