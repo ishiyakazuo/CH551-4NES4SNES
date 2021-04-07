@@ -204,7 +204,6 @@ static void fournsnesUpdate_fourscore(void)
 	unsigned char tmp2=0;
 	unsigned char tmp3=0;
 	unsigned char tmp4=0;
-
 	SNES_LATCH_HIGH();
 	_delay_us(12);
 	SNES_LATCH_LOW();
@@ -379,22 +378,24 @@ void fournsnesUpdate(void)
 			SNES_CLOCK_LOW();
 
 			tmp1 <<= 1;
-			tmp2 <<= 1;
-			tmp3 <<= 1;
-			tmp4 <<= 1;
 			if (!SNES_GET_DATA1()) { tmp1 |= 1; }
+			tmp2 <<= 1;
 			if (!SNES_GET_DATA2()) { tmp2 |= 1; }
+#if NUM_GAMEPADS > 2
+			tmp3 <<= 1;
 			if (!SNES_GET_DATA3()) { tmp3 |= 1; }
+			tmp4 <<= 1;
 			if (!SNES_GET_DATA4()) { tmp4 |= 1; }
-
+#endif
 			_delay_us(6);
 			SNES_CLOCK_HIGH();
 		}
 		last_read_controller_bytes[0] = tmp1;
 		last_read_controller_bytes[2] = tmp2;
+#if NUM_GAMEPADS > 2
 		last_read_controller_bytes[4] = tmp3;
 		last_read_controller_bytes[6] = tmp4;
-
+#endif
 		for (i=0; i<8; i++)
 		{
 			_delay_us(6);
@@ -404,14 +405,15 @@ void fournsnesUpdate(void)
 			// notice that this is different from above. We
 			// want the bits to be in reverse-order
 			tmp1 >>= 1;
-			tmp2 >>= 1;
-			tmp3 >>= 1;
-			tmp4 >>= 1;
 			if (!SNES_GET_DATA1()) { tmp1 |= 0x80; }
+			tmp2 >>= 1;
 			if (!SNES_GET_DATA2()) { tmp2 |= 0x80; }
+#if NUM_GAMEPADS > 2
+			tmp3 >>= 1;
 			if (!SNES_GET_DATA3()) { tmp3 |= 0x80; }
+			tmp4 >>= 1;
 			if (!SNES_GET_DATA4()) { tmp4 |= 0x80; }
-
+#endif
 			_delay_us(6);
 			SNES_CLOCK_HIGH();
 		}
@@ -428,6 +430,7 @@ void fournsnesUpdate(void)
         else
             ctrlFlags.nesMode &= (0xFF ^ 2);
 
+#if NUM_GAMEPADS > 2
         if (tmp3==0xFF)
             ctrlFlags.nesMode |= 4;
         else
@@ -437,15 +440,17 @@ void fournsnesUpdate(void)
             ctrlFlags.nesMode |= 8;
         else
             ctrlFlags.nesMode &= (0xFF ^ 8);
+#endif
     }
-
     /* Force extra bits to 0 when in NES mode. Otherwise, if
         * we read zeros on the wire, we will have permanantly
         * pressed buttons */
     last_read_controller_bytes[1] = (ctrlFlags.nesMode & 1) ? 0x00 : tmp1;
     last_read_controller_bytes[3] = (ctrlFlags.nesMode & 2) ? 0x00 : tmp2;
+#if NUM_GAMEPADS > 2
     last_read_controller_bytes[5] = (ctrlFlags.nesMode & 4) ? 0x00 : tmp3;
     last_read_controller_bytes[7] = (ctrlFlags.nesMode & 8) ? 0x00 : tmp4;
+#endif
 }
 
 unsigned char nesSnesGetX(unsigned char nesByte1)
@@ -533,7 +538,9 @@ char fournsnesBuildReport(unsigned char *reportBuffer, unsigned char id)
 		if (ctrlFlags.nesMode & (0x01<<idx))
 		{
 			reportBuffer[3] = nesReorderButtons(last_read_controller_bytes[idx*2]);
+			#if NUM_BUTTONS > 8
 			reportBuffer[4] = 0;
+			#endif
 		}
 		else {
 			reportBuffer[3] = snesReorderButtons(&last_read_controller_bytes[idx*2]);

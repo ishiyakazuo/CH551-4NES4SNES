@@ -191,7 +191,7 @@ REP_DESC_LEN, 0,  // total length of report descriptor
 10, // in ms
 */
 // poll interval of host in milliseconds
-#define POLL_INTERVAL 2
+#define POLL_INTERVAL (2*NUM_GAMEPADS)
 
 #define CFG_DESC_LEN (9+((9+9+7)*NUM_GAMEPADS))
 #define CFG_INTERFACE_DESCR(a)  0x09,0x04,a,0x00,0x01,0x03,0x00,0x00,0x01
@@ -364,11 +364,15 @@ void GamepadGetLatest()
     int i;
 	CONTROLLER_UPDATE(); // polls pads
 
-	// Each of these converts the (S)NES controller data into the HID data
+	// Each of these converts the controller data into the HID data
 	// in the format that our report descriptor specifies.
     for (i = 0; i < NUM_GAMEPADS; i++)
     {
     	BUILD_CONTROLLER_REPORT(HIDCtrl[i], i+1);
+        if (Ready)
+        {
+    		HIDValueHandle(i);
+        }
     }
 }
 
@@ -716,11 +720,13 @@ main()
 			last = millis;
 		}
         GamepadGetLatest(); // Always get fresh data from the gamepads, because the fresher, the better!
+		/*
         if(Ready)
         {
             HIDValueHandle(i); // Send it to the Host if the host wants it
         }
         i++;
         i %= NUM_GAMEPADS;
+		*/
     }
 }
