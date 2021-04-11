@@ -124,7 +124,7 @@ __xdata __at (0x0080) uint8_t  Ep1Buffer[64];
 __xdata __at (0x00C0) uint8_t  Ep2Buffer[64];
 __xdata __at (0x0100) uint8_t  Ep3Buffer[64];
 
-uint8_t SetupReq,SetupLen,Ready,Count,UsbConfig;
+uint8_t SetupReq,SetupLen,Ready,SentFlag,UsbConfig;
 PUINT8  pDescr;
 USB_SETUP_REQ   SetupReqBuf;
 
@@ -191,7 +191,8 @@ REP_DESC_LEN, 0,  // total length of report descriptor
 10, // in ms
 */
 // poll interval of host in milliseconds
-#define POLL_INTERVAL (2*NUM_GAMEPADS)
+
+#define POLL_INTERVAL 2
 
 #define CFG_DESC_LEN (9+((9+9+7)*NUM_GAMEPADS))
 #define CFG_INTERFACE_DESCR(a)  0x09,0x04,a,0x00,0x01,0x03,0x00,0x00,0x01
@@ -306,31 +307,47 @@ void USBDeviceInit()
 void Enp1IntIn( )
 {
     memcpy( Ep1Buffer, HIDCtrl[0], GAMEPAD_XMIT_DATA_LEN);      // Copy the last generated data to the endpoint
-    UEP1_T_LEN = GAMEPAD_XMIT_DATA_LEN;                       // Let the Host know we have this many bytes to send
-    UEP1_CTRL = UEP1_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK; // Enable acknowledgements
+	if (SentFlag & 1)//if ((SentFlag & 0x11) == 0x11)
+    {
+      UEP1_T_LEN = GAMEPAD_XMIT_DATA_LEN;                       // Let the Host know we have this many bytes to send
+      UEP1_CTRL = UEP1_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK; // Enable acknowledgements
+	  SentFlag ^= 1;
+    }
 }
 #if NUM_GAMEPADS > 1
 void Enp2IntIn( )
 {
     memcpy( Ep2Buffer, HIDCtrl[1], GAMEPAD_XMIT_DATA_LEN);
-    UEP2_T_LEN = GAMEPAD_XMIT_DATA_LEN;
-    UEP2_CTRL = UEP2_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
+	if (SentFlag & 1)//if ((SentFlag & 0x21) == 0x21)
+    {
+      UEP2_T_LEN = GAMEPAD_XMIT_DATA_LEN;
+      UEP2_CTRL = UEP2_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
+	  SentFlag ^= 1;
+    }
 }
 #endif
 #if NUM_GAMEPADS > 2
 void Enp3IntIn( )
 {
     memcpy( Ep3Buffer, HIDCtrl[2], GAMEPAD_XMIT_DATA_LEN);
-    UEP3_T_LEN = GAMEPAD_XMIT_DATA_LEN;
-    UEP3_CTRL = UEP3_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
+	if (SentFlag & 1)//if ((SentFlag & 0x41) == 0x41)
+    {
+        UEP3_T_LEN = GAMEPAD_XMIT_DATA_LEN;
+        UEP3_CTRL = UEP3_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
+        SentFlag ^= 1;
+    }
 }
 #endif
 #if NUM_GAMEPADS > 3
 void Enp4IntIn( )
 {
     memcpy( Ep4Buffer, HIDCtrl[3], GAMEPAD_XMIT_DATA_LEN);
-    UEP4_T_LEN = GAMEPAD_XMIT_DATA_LEN;
-    UEP4_CTRL = UEP4_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
+	if (SentFlag & 1)//if ((SentFlag & 0x81) == 0x81)
+    {
+        UEP4_T_LEN = GAMEPAD_XMIT_DATA_LEN;
+        UEP4_CTRL = UEP4_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_ACK;
+        SentFlag ^= 1;
+    }
 }
 #endif
 void HIDValueHandle(int gamepadID)
@@ -384,23 +401,33 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
         switch (USB_INT_ST & (MASK_UIS_TOKEN | MASK_UIS_ENDP))
         {
         case UIS_TOKEN_IN | 4:                                                  // Endpoint 4 interrupt endpoint upload
+#if NUM_GAMEPADS > 3
+			SentFlag |= 0x81;														// Let the code know that no other interrupt endpoints are sending
+#endif
 			UEP4_T_LEN = 0;                                                     // Clear the length (don't send data)
 			UEP4_CTRL = UEP4_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_NAK;           // NACK requests
 			UEP4_CTRL ^= bUEP_T_TOG;  // Toggle DATA0/DATA1 so that the next message we send is known to be fresh
 				// NOTE: Endpoint 4 on CH55x MUST toggle the DATA0/DATA1 -- it doesn't support auto-toggle.
 			break;
         case UIS_TOKEN_IN | 3:                                                  // Endpoint 3 interrupt endpoint upload
+#if NUM_GAMEPADS > 2
+			SentFlag |= 0x41;														// Let the code know that no other interrupt endpoints are sending
+#endif
 			UEP3_T_LEN = 0;
 			UEP3_CTRL = UEP3_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_NAK;
 			UEP3_CTRL ^= bUEP_T_TOG;  // Don't need to actually do this on Endpoints 1-3,
 				                      // but for consistency, I turned off auto-toggle.
 			break;
         case UIS_TOKEN_IN | 2:                                                  // Endpoint 2 interrupt endpoint upload
+#if NUM_GAMEPADS > 1
+			SentFlag |= 0x21;														// Let the code know that no other interrupt endpoints are sending
+#endif
 			UEP2_T_LEN = 0;
 			UEP2_CTRL = UEP2_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_NAK;
 			UEP2_CTRL ^= bUEP_T_TOG;
 			break;
         case UIS_TOKEN_IN | 1:                                                  // Endpoint 1 interrupt endpoint upload
+			SentFlag |= 0x11;														// Let the code know that no other interrupt endpoints are sending
 			UEP1_T_LEN = 0;
 			UEP1_CTRL = UEP1_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_NAK;
 			UEP1_CTRL ^= bUEP_T_TOG;
@@ -462,6 +489,11 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
 							}
 							break;
                         case 0x22:                                          //Report Descriptor
+							#if USE_SINGLE_EP
+                                pDescr = ControllerRepDesc[0];
+                                len = REP_DESC_LEN*NUM_GAMEPADS;
+                                Ready = 1;
+							#else
                             if (UsbSetupBuf->wIndexL < NUM_GAMEPADS)
                             {
                                 pDescr = ControllerRepDesc[UsbSetupBuf->wIndexL];  // Premade buffer to be sent
@@ -473,6 +505,7 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
 							else {
                               	len = 0xff; // Normally wouldn't execute: Host should only ask for reports for 4 endpoints
                             }
+							#endif
                             break;
                         default:
                             len = 0xff; // Unsupported command or error
@@ -509,15 +542,19 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
 							{
 								case 0x84:
 									UEP4_CTRL = UEP4_CTRL & ~ ( bUEP_T_TOG | MASK_UEP_T_RES ) | UEP_T_RES_NAK;
+                                    //SentFlag |= (0x80);
 									break;
 								case 0x83:
 									UEP3_CTRL = UEP3_CTRL & ~ ( bUEP_T_TOG | MASK_UEP_T_RES ) | UEP_T_RES_NAK;
+                                    //SentFlag |= (0x40);
 									break;
 								case 0x82:
 									UEP2_CTRL = UEP2_CTRL & ~ ( bUEP_T_TOG | MASK_UEP_T_RES ) | UEP_T_RES_NAK;
+                                    //SentFlag |= (0x20);
 									break;
 								case 0x81:
 									UEP1_CTRL = UEP1_CTRL & ~ ( bUEP_T_TOG | MASK_UEP_T_RES ) | UEP_T_RES_NAK;
+                                    //SentFlag |= (0x10);
 									break;
 								case 0x01:
 									UEP1_CTRL = UEP1_CTRL & ~ ( bUEP_R_TOG | MASK_UEP_R_RES ) | UEP_R_RES_ACK;
@@ -563,15 +600,19 @@ void DeviceInterrupt(void) __interrupt (INT_NO_USB)
                                 {
 									case 0x84:
 										UEP4_CTRL = UEP4_CTRL & (~bUEP_T_TOG) | UEP_T_RES_STALL; // EP4 IN STALL
+                                        //SentFlag &= ~(0x80);
 										break;
 									case 0x83:
 										UEP3_CTRL = UEP3_CTRL & (~bUEP_T_TOG) | UEP_T_RES_STALL; // EP3 IN STALL
+                                        //SentFlag &= ~(0x40);
 										break;
 									case 0x82:
 										UEP2_CTRL = UEP2_CTRL & (~bUEP_T_TOG) | UEP_T_RES_STALL; // EP2 IN STALL
+                                        //SentFlag &= ~(0x20);
 										break;
 									case 0x81:
 										UEP1_CTRL = UEP1_CTRL & (~bUEP_T_TOG) | UEP_T_RES_STALL; // EP1 IN STALL
+                                        //SentFlag &= ~(0x10);
 										break;
 									default:
 										len = 0xFF; // Operation failed
@@ -689,6 +730,7 @@ main()
     CfgFsys( );
     mDelaymS(5);
     mInitSTDIO( );
+	SentFlag = 1;
     USBDeviceInit();
 
 	// Put the I/O in a known state
