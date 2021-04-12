@@ -59,11 +59,11 @@ You're right!  But I originally built my 4NES4SNES variant to support 12 buttons
 # Current Status (NES/SNES)
 - It works!  SNES controller support tested on actual hardware as of 2020/02/09.
 - NOTE: If downloaded prior to 2020/02/16, there was an issue with Windows PCs detecting it properly.  New version fixes this.
-- NOTE #2 (2021/04/05): Apparently this doesn't work reliably with multiple NES/SNES pads.  Once a controller device is opened, it seems to kill the other one, so that's a problem... I'll try to fix it, but I am no expert in the CH55x or USB, so it may take some time...
+- NOTE #2 (Updated 2021/04/11): Apparently this doesn't work reliably with multiple NES/SNES pads.  It works perfectly with a single enabled, but with varying success for multiple controllers.  The current code works OK in Linux (tested in Retropie and Linux Mint 20), but not as well in Windows 10.
 
 # Current Status (PlayStation)
 - DualShock and DualShock 2 work, with some caveats:
   - L2/R2 analog function doesn't yet work
   - Analog mode won't turn off, even if you press the button (code always expects analog mode anyway, so this doesn't hurt anything).
 - Original digital pad is still untested.
-- Same note from 2021/04/05 applies as the NES/SNES one -- probably doesn't really work with multiple controllers, even if it reports them.
+- Same note from 2021/04/11 applies as the NES/SNES one -- doesn't really work with multiple controllers in all cases, even if it reports them.
